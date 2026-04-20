@@ -1,0 +1,70 @@
+{
+  "config": {
+    "num_hospitals": 5,
+    "num_rounds": 30,
+    "local_epochs": 5,
+    "dirichlet_alpha": 0.75,
+    "proximal_mu": 0.01,
+    "learning_rate": 0.001
+  },
+  "centralized": {
+    "loss": 0.4806,
+    "accuracy": 0.8525,
+    "precision": 0.8604,
+    "recall": 0.8525,
+    "f1": 0.8504
+  },
+  "federated": {
+    "accuracy": 0.8197,
+    "f1": 0.8154,
+    "precision": 0.8346,
+    "recall": 0.8197,
+    "loss": 0.4352
+  },
+  "local_hospitals": {
+    "H1": {
+      "loss": 0.9151,
+      "accuracy": 0.7213,
+      "precision": 0.7212,
+      "recall": 0.7213,
+      "f1": 0.7195
+    },
+    "H2": {
+      "loss": 0.8164,
+      "accuracy": 0.6557,
+      "precision": 0.6577,
+      "recall": 0.6557,
+      "f1": 0.6477
+    },
+    "H3": {
+      "loss": 0.8073,
+      "accuracy": 0.7213,
+      "precision": 0.7615,
+      "recall": 0.7213,
+      "f1": 0.7163
+    },
+    "H4": {
+      "loss": 1.4212,
+      "accuracy": 0.623,
+      "precision": 0.6446,
+      "recall": 0.623,
+      "f1": 0.5889
+    },
+    "H5": {
+      "loss": 0.6363,
+      "accuracy": 0.7705,
+      "precision": 0.7848,
+      "recall": 0.7705,
+      "f1": 0.7701
+    }
+  },
+  "graph": {
+    "density": 0.3333,
+    "is_connected": true,
+    "num_nodes": 6,
+    "num_edges": 10,
+    "avg_shortest_path": 1.6667,
+    "clustering_coeff": 0.0,
+    "diameter": 2
+  }
+}
