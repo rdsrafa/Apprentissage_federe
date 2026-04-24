@@ -1,63 +1,23 @@
-"""
-Dirichlet/federated/simulation.py
-─────────────────────────────────────────────────────────────────────────────
-Orchestre la simulation complète du système FL.
-
-Trois conditions expérimentales :
-  1. FÉDÉRÉ     : FedProx, topologie étoile (notre contribution principale)
-  2. CENTRALISÉ : toutes les données agrégées — borne supérieure théorique
-  3. LOCAL      : chaque hôpital s'entraîne en isolation — pire cas
-
-Les trois conditions permettent de valider l'hypothèse centrale :
-  F1_local < F1_fédéré ≈ F1_centralisé
-
-Si l'écart fédéré/centralisé est < 5%, on conclut que le FL atteint
-une performance quasi-optimale tout en préservant la confidentialité totale
-des données patients.
-─────────────────────────────────────────────────────────────────────────────
-"""
-
 import sys
 import os
-
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-
 import numpy as np
 import torch
 from typing import List, Dict
+import config
+from data.dataset import HeartDataset
+from model.network import HeartDiseaseNet, train_one_round, evaluate
+from federated.client import HospitalClient
+from federated.serveur import FederatedServeur
 
-from federated_health import config
-from federated_health.data.dataset import HeartDataset
-from federated_health.model.network import HeartDiseaseNet, train_one_round, evaluate
-from federated_health.federated.client import HospitalClient
-from federated_health.federated.serveur import FederatedServeur
 
-
-# ── Apprentissage Fédéré ──────────────────────────────────────────────────────
 
 def run_federated(
     dataset:    HeartDataset,
     partitions: List[Dict],
 ) -> Dict:
-    """
-    Simulation FL complète avec agrégation FedProx.
 
-    Chaque round implémente le protocole FL standard :
-      1. Serveur broadcast les paramètres globaux à tous les hôpitaux
-      2. Chaque hôpital s'entraîne localement (avec terme proximal FedProx)
-      3. Les hôpitaux envoient leurs paramètres mis à jour au serveur
-      4. Le serveur agrège par FedAvg pondéré
-      5. Le serveur évalue le modèle global sur le test set
-
-    Retourne
-    --------
-    Dict avec :
-      history      : métriques par round (accuracy, f1, precision, recall, loss)
-      final_metrics: métriques au dernier round
-      final_eval   : dict d'évaluation complet avec prédictions (pour matrice de confusion)
-      model        : modèle global final
-    """
     print("\n" + "=" * 60)
     print("APPRENTISSAGE FÉDÉRÉ  (FedProx, topologie étoile)")
     print("=" * 60)
@@ -65,7 +25,6 @@ def run_federated(
     device  = torch.device("cpu")
     serveur = FederatedServeur()
 
-    # Instanciation d'un client par hôpital
     clients = []
     for part in partitions:
         idx = part["train_idx"]
@@ -84,10 +43,8 @@ def run_federated(
         serveur.round_number = rnd
         lr = serveur.get_current_lr()
 
-        # ── Étape 1 : Broadcast des paramètres globaux ────────────────────────
         global_params = serveur.get_global_parameters()
 
-        # ── Étape 2 : Entraînement local à chaque hôpital ────────────────────
         client_updates = []
         for client in clients:
             client.set_parameters(global_params)
@@ -99,11 +56,9 @@ def run_federated(
             )
             client_updates.append((updated_params, n_samples))
 
-        # ── Étape 3 : Agrégation sur le serveur ───────────────────────────────
         aggregated_params = serveur.aggregate(client_updates)
         serveur.update_global_model(aggregated_params)
 
-        # ── Étape 4 : Évaluation du modèle global ─────────────────────────────
         global_eval = evaluate(
             serveur.global_model, dataset.X_test, dataset.y_test, device
         )
@@ -135,19 +90,9 @@ def run_federated(
     }
 
 
-# ── Baseline Centralisé ───────────────────────────────────────────────────────
 
 def run_centralized(dataset: HeartDataset) -> Dict:
-    """
-    Entraînement centralisé sur toutes les données combinées.
 
-    Représente le plafond théorique de performance — ce qu'on obtiendrait
-    si tous les hôpitaux partageaient leurs données brutes.
-    NON conforme RGPD (viole l'article 5) — sert uniquement de comparaison.
-
-    Budget d'entraînement équivalent au fédéré :
-        NUM_ROUNDS × LOCAL_EPOCHS époques au total.
-    """
     print("\n" + "=" * 60)
     print("ENTRAÎNEMENT CENTRALISÉ  (borne supérieure — non conforme RGPD)")
     print("=" * 60)
@@ -171,23 +116,12 @@ def run_centralized(dataset: HeartDataset) -> Dict:
     return {"metrics": metrics, "model": model}
 
 
-# ── Baselines Locaux ──────────────────────────────────────────────────────────
 
 def run_local_baselines(
     dataset:    HeartDataset,
     partitions: List[Dict],
 ) -> Dict:
-    """
-    Entraînement local uniquement : chaque hôpital s'entraîne exclusivement
-    sur ses propres données, sans aucune collaboration.
 
-    Illustre le coût de l'isolation : les hôpitaux avec peu de données
-    ou des distributions déséquilibrées (H1 : 12 patients, tous sains)
-    échouent complètement.
-
-    L'écart de performance entre local et fédéré quantifie la valeur
-    ajoutée de la collaboration fédérée.
-    """
     print("\n" + "=" * 60)
     print("ENTRAÎNEMENT LOCAL  (baseline isolation — aucune collaboration)")
     print("=" * 60)

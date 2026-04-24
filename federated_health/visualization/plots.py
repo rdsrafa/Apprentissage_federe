@@ -1,21 +1,3 @@
-"""
-run_local/visualization/plots.py
-─────────────────────────────────────────────────────────────────────────────
-Toutes les visualisations du projet FL.
-
-Figures produites :
-  01_data_distribution    — partitionnement non-IID entre hôpitaux
-  02_convergence_curves   — fédéré vs centralisé vs local (F1 + loss)
-  03_comparison_heatmap   — toutes métriques × toutes conditions
-  04_fl_graph             — topologie étoile + centralité + tailles
-  05_confusion_matrices   — pire local / meilleur local / fédéré / centralisé
-  06_metric_evolution     — accuracy, F1, précision, rappel par round
-  07_summary_dashboard    — tableau de bord synthèse publication-ready
-
-Toutes les figures sont sauvegardées en PNG 200 dpi dans results/.
-─────────────────────────────────────────────────────────────────────────────
-"""
-
 import sys
 import os
 
@@ -31,15 +13,14 @@ import networkx as nx
 import pandas as pd
 from typing import Dict, List
 
-from federated_health import config
-from federated_health.data.dataset import CLASS_NAMES
+import config
+from data.dataset import CLASS_NAMES
 
 plt.style.use("seaborn-v0_8-paper")
 RESULTS_DIR = config.RESULTS_DIR
 C = config.COLORS
 
 
-# ── Helper ────────────────────────────────────────────────────────────────────
 
 def _save(name: str):
     path = os.path.join(RESULTS_DIR, name)
@@ -48,7 +29,6 @@ def _save(name: str):
     print(f"  Sauvegardé : {path}")
 
 
-# ── Figure 01 — Distribution non-IID ─────────────────────────────────────────
 
 def plot_data_distribution(partitions: List[Dict], dataset):
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
@@ -92,7 +72,6 @@ def plot_data_distribution(partitions: List[Dict], dataset):
     _save("01_data_distribution.png")
 
 
-# ── Figure 02 — Courbes de convergence ───────────────────────────────────────
 
 def plot_convergence(fed_history: Dict, central_result: Dict, local_results: Dict):
     fig, axes = plt.subplots(1, 2, figsize=(15, 5))
@@ -148,7 +127,6 @@ def plot_convergence(fed_history: Dict, central_result: Dict, local_results: Dic
     _save("02_convergence_curves.png")
 
 
-# ── Figure 03 — Heatmap de comparaison ───────────────────────────────────────
 
 def plot_comparison_heatmap(fed_result: Dict, central_result: Dict, local_results: Dict):
     rows, accs, precs, recs, f1s = [], [], [], [], []
@@ -199,7 +177,6 @@ def plot_comparison_heatmap(fed_result: Dict, central_result: Dict, local_result
     _save("03_comparison_heatmap.png")
 
 
-# ── Figure 04 — Graphe FL ─────────────────────────────────────────────────────
 
 def plot_fl_graph(G: nx.DiGraph, metrics: Dict, partitions: List[Dict]):
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
@@ -266,7 +243,6 @@ def plot_fl_graph(G: nx.DiGraph, metrics: Dict, partitions: List[Dict]):
     _save("04_fl_graph.png")
 
 
-# ── Figure 05 — Matrices de confusion ────────────────────────────────────────
 
 def plot_confusion_matrices(
     fed_result: Dict, central_result: Dict, local_results: Dict,
@@ -301,7 +277,6 @@ def plot_confusion_matrices(
     _save("05_confusion_matrices.png")
 
 
-# ── Figure 06 — Évolution des métriques ──────────────────────────────────────
 
 def plot_metric_evolution(fed_history: Dict):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
@@ -337,7 +312,6 @@ def plot_metric_evolution(fed_history: Dict):
     _save("06_metric_evolution.png")
 
 
-# ── Figure 07 — Dashboard de synthèse ────────────────────────────────────────
 
 def plot_summary_dashboard(
     fed_result: Dict, central_result: Dict, local_results: Dict,

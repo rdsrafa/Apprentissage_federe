@@ -1,25 +1,3 @@
-"""
-federated_health/main.py
-─────────────────────────────────────────────────────────────────────────────
-Point d'entrée du projet Federated Learning.
-
-Usage :
-    cd <racine_du_projet>
-    python federated_health/main.py
-
-Structure du projet :
-    federated_health/config.py              ← hyperparamètres
-    federated_health/data/dataset.py        ← chargement + partitionnement
-    Dirichlet/model/network.py              ← architecture MLP
-    Dirichlet/federated/client.py           ← client hôpital
-    Dirichlet/federated/serveur.py          ← serveur d'agrégation
-    Dirichlet/federated/simulation.py       ← boucle FL + baselines
-    run_local/graph/network.py              ← graphe NetworkX
-    run_local/visualization/plots.py        ← 7 figures
-    results/                                ← figures PNG + results.json
-─────────────────────────────────────────────────────────────────────────────
-"""
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -35,14 +13,14 @@ import numpy as np
 import torch
 
 import config
-from federated_health.data.dataset import HeartDataset
-from federated_health.federated.simulation import (
+from data.dataset import HeartDataset
+from federated.simulation import (
     run_federated, run_centralized, run_local_baselines
 )
-from federated_health.graph.network import (
+from graph.network import (
     build_fl_graph, compute_graph_metrics, print_graph_interpretation
 )
-from federated_health.visualization.plots import (
+from visualization.plots import (
     plot_data_distribution,
     plot_convergence,
     plot_comparison_heatmap,
@@ -130,12 +108,12 @@ def print_final_report(fed_result, central_result, local_results):
 
     print("\n  " + "─" * 58)
     if gap_pct < 5.0:
-        print(f"\n  ✅ HYPOTHÈSE VALIDÉE (écart = {gap_pct:.2f}% < seuil de 5%)")
+        print(f"\n Hypothèse validée car l'écart = {gap_pct:.2f}% < seuil de 5% : ")
         print(f"  Le FL atteint {gap_pct:.2f}% de moins que le centralisé")
         print(f"  tout en gagnant +{gain_pct:.2f}% vs les modèles locaux,")
         print(f"  avec ZÉRO donnée patient partagée entre hôpitaux.")
     else:
-        print(f"\n  ⚠️  Écart = {gap_pct:.2f}% > 5% — pour améliorer :")
+        print(f"\n  Hypothèse pas validée car l'écart = {gap_pct:.2f}% > 5% — pour améliorer :")
         print(f"     - Augmenter NUM_ROUNDS dans config.py (actuel : {config.NUM_ROUNDS})")
         print(f"     - Augmenter DIRICHLET_ALPHA (actuel : {config.DIRICHLET_ALPHA})")
         print(f"     - Réduire PROXIMAL_MU (actuel : {config.PROXIMAL_MU})")
@@ -143,10 +121,8 @@ def print_final_report(fed_result, central_result, local_results):
 
 
 def main():
-    print("\n" + "█" * 60)
-    print("  FEDERATED LEARNING — PRÉDICTION MALADIE CARDIAQUE")
+    print("  FEDERATED LEARNING — PRÉDICTION MALADIE CARDIAQUE\n")
     print("  Cleveland Dataset | PyTorch + FedProx | 5 Hôpitaux")
-    print("█" * 60)
 
     print("\n[1/7] Chargement du dataset & création des partitions hôpitaux...")
     dataset    = HeartDataset()
@@ -180,7 +156,6 @@ def main():
     print_final_report(fed_result, central_result, local_results)
 
     print(f"\n  Tous les outputs dans : {config.RESULTS_DIR}/")
-    print("█" * 60 + "\n")
 
 
 if __name__ == "__main__":

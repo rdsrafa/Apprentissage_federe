@@ -1,40 +1,14 @@
-"""
-run_local/graph/network.py
-─────────────────────────────────────────────────────────────────────────────
-Représentation graph-théorique du système FL avec NetworkX.
-
-Modéliser le système FL comme un graphe dirigé sert deux objectifs :
-  1. Analyse structurelle : quantifier les propriétés topologiques
-  2. Argument de confidentialité : les métriques démontrent formellement
-     que les hôpitaux ne sont jamais connectés entre eux
-
-Définition du graphe :
-  Nœuds : serveur central + clients hôpitaux
-  Arêtes : échange de paramètres dirigé
-             (serveur→client = broadcast, client→serveur = agrégation)
-─────────────────────────────────────────────────────────────────────────────
-"""
-
 import sys
 import os
-
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-
 import numpy as np
 import networkx as nx
 from typing import List, Dict
 
 
 def build_fl_graph(partitions: List[Dict]) -> nx.DiGraph:
-    """
-    Construit le graphe de communication du système FL.
 
-    Retourne un graphe dirigé où :
-      - "Serveur" = serveur central d'agrégation
-      - "H1"..."H5" = clients hôpitaux
-      - Arêtes dirigées = flux de paramètres (pas de données)
-    """
     G = nx.DiGraph()
 
     G.add_node("Serveur", type="server",
@@ -48,11 +22,9 @@ def build_fl_graph(partitions: List[Dict]) -> nx.DiGraph:
             n_patients=p["n_samples"],
             class_counts=p["class_counts"],
         )
-        # Serveur → Hôpital : broadcast des paramètres globaux
         G.add_edge("Serveur", hid,
                    direction="broadcast",
                    content="model_parameters")
-        # Hôpital → Serveur : envoi des paramètres locaux mis à jour
         G.add_edge(hid, "Serveur",
                    direction="aggregation",
                    content="model_parameters")
@@ -61,33 +33,28 @@ def build_fl_graph(partitions: List[Dict]) -> nx.DiGraph:
 
 
 def compute_graph_metrics(G: nx.DiGraph) -> Dict:
-    """
-    Calcule les métriques graph-théoriques pertinentes pour le FL.
 
-    Les métriques de chemin sont calculées sur la version non-dirigée ;
-    la centralité dirigée est calculée séparément.
-    """
     U = G.to_undirected()
 
     return {
-        "degree_centrality":      nx.degree_centrality(G),
+        "degree_centrality":      nx.degree_centrality(U),
+
         "betweenness_centrality": nx.betweenness_centrality(G),
+
         "in_degree_centrality":   nx.in_degree_centrality(G),
         "out_degree_centrality":  nx.out_degree_centrality(G),
-        "density":                nx.density(U),
-        "is_connected":           nx.is_connected(U),
-        "num_nodes":              G.number_of_nodes(),
-        "num_edges":              G.number_of_edges(),
-        "avg_shortest_path":      nx.average_shortest_path_length(U),
-        "clustering_coeff":       nx.average_clustering(U),
-        "diameter":               nx.diameter(U),
+
+        "density":           nx.density(U),
+        "is_connected":      nx.is_connected(U),
+        "num_nodes":         G.number_of_nodes(),
+        "num_edges":         G.number_of_edges(),
+        "avg_shortest_path": nx.average_shortest_path_length(U),
+        "clustering_coeff":  nx.average_clustering(U),
+        "diameter":          nx.diameter(U),
     }
 
 
 def print_graph_interpretation(metrics: Dict):
-    """
-    Affiche une interprétation structurée des métriques dans le contexte FL.
-    """
     print("\n" + "=" * 60)
     print("MÉTRIQUES DU GRAPHE — ANALYSE DU SYSTÈME FÉDÉRÉ")
     print("=" * 60)
