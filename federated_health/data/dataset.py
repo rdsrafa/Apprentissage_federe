@@ -91,7 +91,7 @@ class HeartDataset:
             remaining_idx = idx[num_clients * min_samples_per_class:]
             proportions = np.random.dirichlet([alpha] * num_clients)
             splits = (proportions * len(remaining_idx)).astype(int)
-            splits[-1] = len(remaining_idx) - splits[:-1].sum() # Correction arrondi
+            splits[-1] = len(remaining_idx) - splits[:-1].sum() 
             
             curr = 0
             for cid, size in enumerate(splits):
@@ -100,7 +100,7 @@ class HeartDataset:
         partitions = []
         for cid, t_idx in enumerate(client_train_idx):
             t_idx = np.array(t_idx)
-            np.random.shuffle(t_idx) # Shuffle final pour mélanger les seeds et le reste
+            np.random.shuffle(t_idx) 
             
             class_counts = {c: int((labels[t_idx] == c).sum()) for c in range(n_classes)}
             partitions.append({
