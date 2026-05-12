@@ -63,7 +63,6 @@ class HeartDiseaseNet(nn.Module):
         self.load_state_dict(state_dict, strict=True)
 
 
-# ── Entraînement ──────────────────────────────────────────────────────────────
 
 def train_one_round(
     model:         HeartDiseaseNet,
